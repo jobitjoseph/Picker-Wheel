@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Picker Wheel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3EFFF; --surface:#FFFFFF; --surface-2:#ECE6FC; --ink:#231942; --muted:#6B6390;
+  --line:#DDD5F3; --sun:#FFC43D; --sun-ink:#231942; --rim:#231942; --danger:#D6336C; --focus:#7B61FF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  font-family:"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17112E; --surface:#221A42; --surface-2:#2D2456; --ink:#F1ECFF; --muted:#A79FCB;
+    --line:#3A3068; --rim:#0E0920; --focus:#B7A6FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17112E; --surface:#221A42; --surface-2:#2D2456; --ink:#F1ECFF; --muted:#A79FCB;
+  --line:#3A3068; --rim:#0E0920; --focus:#B7A6FF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{max-width:1180px;margin:0 auto;padding:20px 20px 0;display:flex;align-items:center;gap:12px}
+#title{flex:1;min-width:0;background:transparent;border:0;border-bottom:2px dashed transparent;
+  font-size:clamp(1.8rem,4.5vw,3rem);font-weight:800;letter-spacing:-0.02em;line-height:1.1;padding:4px 0}
+#title:hover{border-bottom-color:var(--line)}
+#title:focus{outline:none;border-bottom-color:var(--focus)}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--surface);
+  display:grid;place-items:center;font-size:1.1rem;flex:none}
+.icon-btn:hover{border-color:var(--ink)}
+
+.layout{max-width:1180px;margin:0 auto;padding:16px 20px 40px;display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr;gap:24px}}
+
+/* Stage */
+.stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+.wheel-wrap{position:relative;width:min(100%,560px);aspect-ratio:1}
+#wheel{width:100%;height:100%;display:block;cursor:pointer;touch-action:manipulation}
+.pointer{position:absolute;top:-10px;left:50%;width:44px;height:56px;margin-left:-22px;
+  transform-origin:50% 22%;pointer-events:none;filter:drop-shadow(0 3px 0 rgba(0,0,0,.25))}
+.hub{position:absolute;top:50%;left:50%;width:23%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;border:6px solid var(--rim);background:var(--sun);color:var(--sun-ink);
+  font-weight:800;font-size:clamp(1rem,3.4vw,1.6rem);letter-spacing:-0.01em;
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.14);transition:transform .15s}
+.hub:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.05)}
+.hub:active:not(:disabled){transform:translate(-50%,-50%) scale(.97)}
+.hub:disabled{cursor:default}
+
+.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;align-items:center}
+.pill{border:2px solid var(--ink);background:transparent;border-radius:999px;padding:8px 16px;font-weight:600;min-height:44px}
+.pill:hover{background:var(--surface-2)}
+.pill.solid{background:var(--ink);color:var(--bg)}
+.pill.solid:hover{opacity:.9}
+.pill:disabled{opacity:.4;cursor:default}
+.field{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--muted);min-height:44px}
+.field select{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 8px;color:var(--ink)}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--muted);min-height:44px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--ink)}
+.mode-note{color:var(--muted);font-size:.9rem;text-align:center;margin:-6px 0 0;min-height:1.3em}
+
+/* Panel */
+.panel{background:var(--surface);border:2px solid var(--line);border-radius:22px;overflow:hidden}
+.tabs{display:flex;border-bottom:2px solid var(--line)}
+.tab{flex:1;background:transparent;border:0;padding:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tab .n{display:inline-block;min-width:1.6em;padding:0 6px;border-radius:999px;background:var(--surface-2);font-size:.85rem;margin-left:4px}
+.pane{padding:18px}
+.pane[hidden]{display:none}
+
+.add-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.add-row input{border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;min-height:46px;min-width:0}
+.add-row input:focus{border-color:var(--ink);outline:none}
+.add-row .count-in{text-align:center}
+.hint{color:var(--muted);font-size:.85rem;margin:6px 2px 0}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
+.chip{border:0;background:var(--surface-2);border-radius:999px;padding:7px 12px;font-weight:600;font-size:.9rem;min-height:36px}
+.chip:hover{background:var(--line)}
+.chip.danger{color:var(--danger)}
+.chip.armed{background:var(--danger);color:#fff}
+.global-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-weight:600}
+
+.bulk{margin-top:10px}
+.bulk[hidden]{display:none}
+.bulk textarea{width:100%;min-height:130px;border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;resize:vertical}
+.bulk textarea:focus{border-color:var(--ink);outline:none}
+.bulk .row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+
+.summary{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;margin:12px 2px 4px}
+.list{list-style:none;margin:0;padding:0;max-height:min(52vh,520px);overflow-y:auto}
+.item{display:grid;grid-template-columns:30px minmax(0,1fr) 52px 34px;gap:8px;align-items:center;
+  padding:8px 2px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item.off .name,.item.off .prob{opacity:.45}
+.swatch{position:relative;width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);overflow:hidden;cursor:pointer}
+.swatch input{position:absolute;inset:-8px;width:44px;height:44px;opacity:0;cursor:pointer}
+.name{border:2px solid transparent;background:transparent;border-radius:8px;padding:6px 8px;font-weight:600;min-width:0;width:100%}
+.name:hover{border-color:var(--line)}
+.name:focus{border-color:var(--ink);outline:none;background:var(--bg)}
+.stepper{display:flex;align-items:center;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.stepper button{width:32px;height:34px;border:0;background:transparent;font-weight:800;font-size:1.05rem}
+.stepper button:hover{background:var(--surface-2)}
+.stepper input{width:36px;border:0;background:transparent;text-align:center;font-weight:600;-moz-appearance:textfield;appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.prob{font-size:.85rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.del{width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--muted);font-size:1.3rem;line-height:1}
+.del:hover{background:var(--surface-2);color:var(--danger)}
+.empty{text-align:center;color:var(--muted);padding:28px 10px}
+
+.tally{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tally span{background:var(--surface-2);border-radius:999px;padding:5px 12px;font-size:.9rem;font-weight:600}
+.history{list-style:none;margin:0;padding:0;max-height:min(52vh,520px);overflow-y:auto}
+.history li{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.history .dot{width:14px;height:14px;border-radius:50%;flex:none;border:2px solid var(--ink)}
+.history .t{margin-left:auto;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+
+/* Winner dialog */
+dialog{border:0;padding:0;border-radius:26px;background:var(--surface);color:var(--ink);width:min(92vw,440px);
+  box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(23,17,46,.55)}
+.win-band{padding:34px 24px 28px;text-align:center}
+.win-band p{margin:0 0 6px;font-weight:600;opacity:.85}
+.win-band h2{margin:0;font-size:clamp(2rem,8vw,3rem);line-height:1.05;letter-spacing:-0.02em;font-weight:800;word-break:break-word}
+.win-body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px}
+.win-note{margin:0;color:var(--muted);text-align:center;font-size:.95rem;min-height:1.2em}
+.win-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+[hidden]{display:none !important}
+.series{width:min(100%,560px);background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:14px 16px 16px}
+.series-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.series-head strong{font-size:1.15rem;font-weight:800}
+.series-head .prog{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.series-head .chip{margin-left:auto}
+.dots{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;padding:0}
+.dots li{width:18px;height:18px;border-radius:50%;border:2px solid var(--ink)}
+.dots li.todo{border-style:dashed;border-color:var(--line)}
+.dots li.tb{border-radius:4px}
+.board{display:flex;flex-direction:column;gap:6px}
+.brow{display:grid;grid-template-columns:minmax(70px,30%) 1fr 34px;gap:10px;align-items:center;font-weight:600}
+.brow .bn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .bar{height:14px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.brow .bar i{display:block;height:100%;border-radius:999px;transition:width .3s}
+.brow .bc{text-align:right;font-variant-numeric:tabular-nums}
+.brow.win .bn::after{content:" 🏆"}
+.series-msg{margin:10px 0 0;color:var(--muted);font-size:.92rem;min-height:1.2em}
+.history small{color:var(--muted);font-weight:600;margin-left:6px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){ .hub{transition:none} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <label class="sr" for="title">Wheel title</label>
+  <input id="title" maxlength="60" autocomplete="off">
+  <button class="icon-btn" id="soundBtn" title="Sound on" aria-label="Toggle sound">🔊</button>
+  <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch light or dark theme">◐</button>
+</header>
+
+<main class="layout">
+  <section class="stage" aria-label="Wheel">
+    <div class="wheel-wrap">
+      <canvas id="wheel" role="img" aria-label="Picker wheel"></canvas>
+      <svg class="pointer" id="pointer" viewBox="0 0 44 56" aria-hidden="true">
+        <path d="M22 54 L4 12 A18 18 0 1 1 40 12 Z" fill="var(--sun)" stroke="var(--rim)" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="22" cy="18" r="6" fill="var(--rim)"/>
+      </svg>
+      <button class="hub" id="spinBtn">Spin</button>
+    </div>
+
+    <div class="controls">
+      <label class="field">Layout
+        <select id="layout">
+          <option value="alternate">Alternating</option>
+          <option value="scramble">Scrambled</option>
+          <option value="grouped">Grouped</option>
+        </select>
+      </label>
+      <button class="pill solid" id="reshuffle">Scramble again</button>
+      <label class="field">Spin time
+        <select id="duration">
+          <option value="3">Quick</option>
+          <option value="5">Normal</option>
+          <option value="8">Long</option>
+        </select>
+      </label>
+      <label class="field">Mode
+        <select id="mode">
+          <option value="single">Single spin</option>
+          <option value="bestof">Best of</option>
+        </select>
+      </label>
+      <div class="field" id="bestOfField">
+        <div class="stepper">
+          <button id="boMinus" aria-label="Fewer spins">−</button>
+          <input id="bestOf" type="number" min="2" max="25" aria-label="Number of spins">
+          <button id="boPlus" aria-label="More spins">+</button>
+        </div>
+        spins
+      </div>
+      <label class="check"><input type="checkbox" id="removeWinner"> Remove winner after spin</label>
+    </div>
+    <p class="mode-note" id="modeNote"></p>
+
+    <div class="series" id="series" hidden aria-live="polite">
+      <div class="series-head">
+        <strong id="seriesTitle">Best of 3</strong>
+        <span class="prog" id="seriesProgress"></span>
+        <button class="chip" id="seriesStop">Stop after this spin</button>
+      </div>
+      <ol class="dots" id="seriesDots"></ol>
+      <div class="board" id="seriesBoard"></div>
+      <p class="series-msg" id="seriesMsg"></p>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabItems" aria-selected="true" aria-controls="paneItems">Items <span class="n" id="nItems">0</span></button>
+      <button class="tab" role="tab" id="tabHistory" aria-selected="false" aria-controls="paneHistory">History <span class="n" id="nHistory">0</span></button>
+    </div>
+
+    <div class="pane" id="paneItems" role="tabpanel">
+      <div class="add-row">
+        <label class="sr" for="newName">New item name</label>
+        <input id="newName" placeholder="Add an item" maxlength="80" autocomplete="off">
+        <button class="pill solid" id="addBtn">Add</button>
+      </div>
+      <div class="global-row">
+        <span>Slices per item</span>
+        <div class="stepper">
+          <button id="spMinus" aria-label="Fewer slices per item">−</button>
+          <input id="slicesPer" type="number" min="1" max="20" aria-label="Slices per item">
+          <button id="spPlus" aria-label="More slices per item">+</button>
+        </div>
+      </div>
+      <p class="hint">Every item gets the same number of slices, so the odds stay equal.</p>
+
+      <div class="toolbar">
+        <button class="chip" id="bulkToggle">Paste a list</button>
+        <button class="chip" id="shuffleList">Shuffle list</button>
+        <button class="chip" id="sortList">Sort A to Z</button>
+        <button class="chip danger" id="clearAll">Clear all</button>
+      </div>
+
+      <div class="bulk" id="bulk" hidden>
+        <label class="sr" for="bulkText">Paste items, one per line</label>
+        <textarea id="bulkText" placeholder="One item per line&#10;Yes&#10;No&#10;Maybe"></textarea>
+        <div class="row">
+          <button class="chip" id="bulkCancel">Cancel</button>
+          <button class="pill solid" id="bulkAdd">Add these</button>
+        </div>
+      </div>
+
+      <div class="summary"><span id="sumLeft"></span><span id="sumRight"></span></div>
+      <ul class="list" id="list"></ul>
+    </div>
+
+    <div class="pane" id="paneHistory" role="tabpanel" hidden>
+      <div class="tally" id="tally"></div>
+      <ol class="history" id="history"></ol>
+      <div class="toolbar"><button class="chip danger" id="clearHistory">Clear history</button></div>
+    </div>
+  </aside>
+</main>
+
+<dialog id="winDialog" aria-labelledby="winName">
+  <div class="win-band" id="winBand">
+    <p id="winLabel">The wheel picked</p>
+    <h2 id="winName"></h2>
+  </div>
+  <div class="win-body">
+    <p class="win-note" id="winNote"></p>
+    <div class="win-actions">
+      <button class="pill" id="winRemove">Remove from wheel</button>
+      <button class="pill" id="winClose">Close</button>
+      <button class="pill solid" id="winAgain">Spin again</button>
+    </div>
+  </div>
+</dialog>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+(function(){
+  "use strict";
+  const PALETTE = ["#FF6B6B","#FFC43D","#1B9AAA","#06D6A0","#7B61FF","#EF476F","#118AB2","#F78C6B","#8AC926","#FF9F1C","#C77DFF","#2EC4B6"];
+  const TAU = Math.PI * 2;
+  const MAX_COUNT = 99;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = s => document.querySelector(s);
+
+  // ---------- storage ----------
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  const defaults = () => ({
+    title: "Yes or no?",
+    items: [
+      {id:uid(), name:"Yes", color:"#06D6A0"},
+      {id:uid(), name:"No", color:"#EF476F"}
+    ],
+    layout:"alternate", slicesPer:5, order:[], removeWinner:false, mode:"single", bestOf:3, sound:true, duration:5, history:[], theme:null
+  });
+
+  let state = Object.assign(defaults(), store.get("picker-wheel-v2", {}) || {});
+  if(!Array.isArray(state.items)) state.items = [];
+  if(!Array.isArray(state.order)) state.order = [];
+  if(!Array.isArray(state.history)) state.history = [];
+  const save = () => store.set("picker-wheel-v2", state);
+
+  // ---------- helpers ----------
+  const clampCount = v => { v = parseInt(v, 10); if(isNaN(v)) v = 0; return Math.max(0, Math.min(MAX_COUNT, v)); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  if(!["alternate","scramble","grouped"].includes(state.layout)) state.layout = "alternate";
+  state.slicesPer = Math.max(1, Math.min(20, parseInt(state.slicesPer, 10) || 5));
+  state.items.forEach(i => delete i.count);
+  const per = () => state.slicesPer;
+  const active = () => state.items.filter(i => i.name.trim());
+  const nextColor = () => {
+    const used = new Set(state.items.map(i => i.color.toLowerCase()));
+    return PALETTE.find(c => !used.has(c.toLowerCase())) || PALETTE[state.items.length % PALETTE.length];
+  };
+  function textOn(hex){
+    const h = hex.replace("#","");
+    const n = parseInt(h.length === 3 ? h.split("").map(c=>c+c).join("") : h, 16);
+    const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    const L = (0.299*r + 0.587*g + 0.114*b) / 255;
+    return L > 0.6 ? "#231942" : "#FFFFFF";
+  }
+  const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  // ---------- slices ----------
+  function scrambleUnits(act){
+    const base = [];
+    act.forEach(i => { for(let k=0;k<per();k++) base.push(i.id); });
+    let best = base.slice(), bestScore = Infinity;
+    const tries = base.length > 300 ? 4 : 40;
+    for(let t=0;t<tries;t++){
+      const a = shuffle(base.slice());
+      let s = 0;
+      for(let j=0;j<a.length;j++) if(a.length > 1 && a[j] === a[(j+1) % a.length]) s++;
+      if(s < bestScore){ bestScore = s; best = a; }
+      if(s === 0) break;
+    }
+    return best;
+  }
+  // keep the scrambled order when items change: drop extras, insert new slices at random spots
+  function reconcileOrder(act){
+    const need = {}; act.forEach(i => need[i.id] = per());
+    const have = {}; const out = [];
+    for(const id of state.order){
+      if(need[id] && (have[id]||0) < need[id]){ out.push(id); have[id] = (have[id]||0) + 1; }
+    }
+    for(const i of act){
+      while((have[i.id]||0) < need[i.id]){
+        out.splice(Math.floor(Math.random()*(out.length+1)), 0, i.id);
+        have[i.id] = (have[i.id]||0) + 1;
+      }
+    }
+    state.order = out;
+  }
+  function buildSlices(){
+    const act = active();
+    if(!act.length) return [];
+    let units = [];
+    if(state.layout === "scramble"){
+      reconcileOrder(act);
+      const byId = Object.fromEntries(act.map(i => [i.id, i]));
+      units = state.order.map(id => ({item:byId[id], w:1}));
+    } else if(state.layout === "grouped"){
+      units = act.map(i => ({item:i, w:per()}));
+    } else {
+      // alternating: A B C A B C ...
+      for(let k=0;k<per();k++) act.forEach(i => units.push({item:i, w:1}));
+    }
+    const total = units.reduce((s,u) => s + u.w, 0);
+    let a = 0;
+    return units.map(u => { const s = a; a += u.w / total * TAU; return {item:u.item, start:s, end:a}; });
+  }
+  let slices = [];
+
+  // ---------- wheel drawing ----------
+  const wheel = $("#wheel");
+  const ctx = wheel.getContext("2d");
+  let rot = 0, spinning = false, bulbPhase = 0;
+  let colors = {};
+  const readColors = () => { colors = {rim:cssVar("--rim"), sun:cssVar("--sun"), muted:cssVar("--muted"), surface2:cssVar("--surface-2")}; };
+
+  function sizeCanvas(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const w = wheel.clientWidth;
+    wheel.width = Math.round(w * dpr); wheel.height = Math.round(w * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  function fitText(text, max){
+    if(ctx.measureText(text).width <= max) return text;
+    let t = text;
+    while(t.length > 1 && ctx.measureText(t + "…").width > max) t = t.slice(0, -1);
+    return t + "…";
+  }
+
+  function draw(){
+    const size = wheel.clientWidth;
+    if(!size) return;
+    const c = size / 2, outer = c - 2, R = c * 0.87;
+    ctx.clearRect(0, 0, size, size);
+
+    // rim
+    ctx.beginPath(); ctx.arc(c, c, outer, 0, TAU); ctx.fillStyle = colors.rim; ctx.fill();
+
+    // bulbs
+    const bulbs = 24, br = (outer - R) * 0.24, bR = (outer + R) / 2;
+    for(let i=0;i<bulbs;i++){
+      const a = i / bulbs * TAU + rot * 0.0;
+      const on = !spinning || ((i + bulbPhase) % 2 === 0);
+      ctx.beginPath();
+      ctx.arc(c + Math.cos(a) * bR, c + Math.sin(a) * bR, br, 0, TAU);
+      ctx.fillStyle = on ? colors.sun : "rgba(255,255,255,.22)";
+      ctx.fill();
+    }
+
+    ctx.save();
+    ctx.translate(c, c);
+    if(!slices.length){
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fillStyle = colors.surface2; ctx.fill();
+      ctx.restore();
+      return;
+    }
+    ctx.rotate(rot);
+    const sep = slices.length <= 120;
+    for(const s of slices){
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, s.start, s.end); ctx.closePath();
+      ctx.fillStyle = s.item.color; ctx.fill();
+      if(sep && slices.length > 1){ ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5; ctx.stroke(); }
+    }
+    // labels
+    const hubR = size * 0.115;
+    for(const s of slices){
+      const span = s.end - s.start;
+      const fs = Math.min(R * 0.1, span * R * 0.42, 26);
+      if(fs < 7.5) continue;
+      ctx.save();
+      ctx.rotate(s.start + span / 2);
+      ctx.font = `600 ${fs}px "Bricolage Grotesque", system-ui, sans-serif`;
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillStyle = textOn(s.item.color);
+      const maxW = R - 14 - hubR - 10;
+      ctx.fillText(fitText(s.item.name.trim(), maxW), R - 14, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // inner ring shadow for depth
+    ctx.beginPath(); ctx.arc(c, c, R, 0, TAU);
+    ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.stroke();
+  }
+
+  // pointer at top = -90deg in screen space
+  function indexAt(r){
+    if(!slices.length) return -1;
+    let a = (-Math.PI / 2 - r) % TAU; if(a < 0) a += TAU;
+    for(let i=0;i<slices.length;i++) if(a >= slices[i].start && a < slices[i].end) return i;
+    return slices.length - 1;
+  }
+
+  // ---------- sound ----------
+  let actx = null;
+  function ensureAudio(){
+    if(!state.sound) return;
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if(actx.state === "suspended") actx.resume();
+    }catch(e){ actx = null; }
+  }
+  function beep(freq, at, len, vol, type){
+    if(!actx || !state.sound) return;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq;
+    const t = actx.currentTime + (at || 0);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + len + 0.02);
+  }
+  let lastTick = 0;
+  function tick(){
+    const now = performance.now();
+    if(now - lastTick < 28) return;
+    lastTick = now;
+    beep(1100, 0, 0.04, 0.06, "square");
+  }
+  const fanfare = () => [523, 659, 784, 1047].forEach((f, i) => beep(f, i * 0.09, 0.22, 0.09));
+
+  // ---------- spin ----------
+  const pointer = $("#pointer");
+  const spinBtn = $("#spinBtn");
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  function flick(){
+    if(reduceMotion || !pointer.animate) return;
+    pointer.animate([{transform:"rotate(-18deg)"},{transform:"rotate(0deg)"}], {duration:120, easing:"ease-out"});
+  }
+
+  // one animated spin; resolves with the item under the pointer
+  function spinOnce(){
+    return new Promise(resolve => {
+      const base = state.duration * 1000;
+      const dur = reduceMotion ? 900 : base * (0.85 + Math.random() * 0.3);
+      const turns = reduceMotion ? 1 : Math.round(state.duration) + 3;
+      const from = rot, to = rot + turns * TAU + Math.random() * TAU;
+      const t0 = performance.now();
+      let last = indexAt(rot);
+      spinning = true;
+      function frame(now){
+        const t = Math.min(1, (now - t0) / dur);
+        const e = 1 - Math.pow(1 - t, 4);
+        rot = from + (to - from) * e;
+        bulbPhase = Math.floor(now / 140) % 2;
+        draw();
+        const idx = indexAt(rot);
+        if(idx !== last){ last = idx; tick(); flick(); }
+        if(t < 1){ requestAnimationFrame(frame); return; }
+        spinning = false; rot %= TAU; draw();
+        const s = slices[indexAt(rot)];
+        resolve(s ? s.item : null);
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  let busy = false, lastWinnerId = null, series = null;
+
+  async function spin(){
+    if(busy) return;
+    if(!slices.length){ $("#newName").focus(); return; }
+    ensureAudio();
+    if(dlg.open) closeDialog();
+    if(state.mode === "bestof") return runSeries();
+    $("#series").hidden = true;
+    setBusy(true);
+    const it = await spinOnce();
+    setBusy(false);
+    if(it) announce({id:it.id, name:it.name.trim(), color:it.color}, `${pct(it)} chance on this spin.`, "", "The wheel picked");
+  }
+
+  function leadersOf(res){
+    const c = {};
+    res.filter(r => !r.tb).forEach(r => c[r.id] = (c[r.id] || 0) + 1);
+    const max = Math.max(...Object.values(c));
+    return Object.keys(c).filter(k => c[k] === max);
+  }
+
+  async function runSeries(){
+    const n = state.bestOf;
+    series = {n, results:[], stop:false, leaders:null, running:true, msg:"", winner:null};
+    setBusy(true);
+    $("#series").hidden = false;
+    $("#seriesStop").textContent = "Stop after this spin";
+    renderSeries();
+
+    for(let i = 0; i < n && !series.stop; i++){
+      if(!slices.length) break;
+      const it = await spinOnce();
+      if(!it) break;
+      series.results.push({id:it.id, name:it.name.trim(), color:it.color, tb:false});
+      beep(660, 0, 0.12, 0.07);
+      renderSeries();
+      if(i < n - 1 && !series.stop) await wait(reduceMotion ? 250 : 650);
+    }
+    const res = series.results;
+    if(!res.length){ series.running = false; setBusy(false); renderSeries(); return; }
+
+    const stoppedEarly = res.length < n;
+    let leaders = leadersOf(res);
+    let tbSpins = 0;
+    if(leaders.length > 1 && !series.stop){
+      series.leaders = leaders;
+      while(leaders.length > 1 && !series.stop && tbSpins < 40 && slices.length){
+        const names = leaders.map(id => res.find(r => r.id === id).name).join(" and ");
+        series.msg = `Tie between ${names}. Tiebreaker: only tied items count.`;
+        renderSeries();
+        await wait(reduceMotion ? 250 : 800);
+        const it = await spinOnce(); tbSpins++;
+        if(it && leaders.includes(it.id)){
+          res.push({id:it.id, name:it.name.trim(), color:it.color, tb:true});
+          leaders = [it.id];
+        } else if(it){
+          series.msg = `${it.name.trim()} isn't in the tie. Spinning again.`;
+          renderSeries();
+        }
+      }
+    }
+    let random = false;
+    if(leaders.length > 1){ leaders = [leaders[Math.floor(Math.random() * leaders.length)]]; random = true; }
+
+    const wid = leaders[0];
+    const w = res.find(r => r.id === wid);
+    const done = res.filter(r => !r.tb).length;
+    const wins = res.filter(r => r.id === wid && !r.tb).length;
+    let note = `Won ${wins} of ${done} spins`;
+    if(stoppedEarly) note += ", stopped early";
+    if(res.some(r => r.tb && r.id === wid)) note += ", then won the tiebreaker";
+    if(random) note += ". The tie was settled at random";
+    note += ".";
+
+    series.running = false; series.msg = ""; series.winner = wid;
+    renderSeries();
+    setBusy(false);
+    announce({id:w.id, name:w.name, color:w.color}, note, `Best of ${n}`, `Best of ${n} winner`);
+  }
+
+  function renderSeries(){
+    const s = series; if(!s) return;
+    const main = s.results.filter(r => !r.tb);
+    const tbs = s.results.filter(r => r.tb);
+    $("#seriesTitle").textContent = `Best of ${s.n}`;
+    $("#seriesProgress").textContent = !s.running ? "Finished"
+      : s.leaders ? "Tiebreaker" : `Spin ${Math.min(main.length + 1, s.n)} of ${s.n}`;
+    $("#seriesStop").hidden = !s.running;
+    const dot = (r, cls) => `<li class="${cls}" style="background:${esc(r.color)}" title="${esc(r.name)}"></li>`;
+    $("#seriesDots").innerHTML =
+      main.map(r => dot(r, "")).join("") +
+      (s.running && !s.leaders ? Array(Math.max(0, s.n - main.length)).fill('<li class="todo"></li>').join("") : "") +
+      tbs.map(r => dot(r, "tb")).join("");
+    const c = {};
+    main.forEach(r => { c[r.id] = c[r.id] || {name:r.name, color:r.color, n:0}; c[r.id].n++; });
+    $("#seriesBoard").innerHTML = Object.entries(c).sort((a, b) => b[1].n - a[1].n).map(([id, v]) => `
+      <div class="brow${s.winner === id ? " win" : ""}">
+        <span class="bn">${esc(v.name)}</span>
+        <span class="bar"><i style="width:${v.n / s.n * 100}%;background:${esc(v.color)}"></i></span>
+        <span class="bc">${v.n}</span>
+      </div>`).join("");
+    $("#seriesMsg").textContent = s.msg;
+  }
+  $("#seriesStop").onclick = () => { if(series && series.running){ series.stop = true; $("#seriesStop").textContent = "Stopping…"; } };
+
+  function announce(w, note, detail, label){
+    lastWinnerId = w.id;
+    state.history.unshift({name:w.name, color:w.color, at:Date.now(), detail});
+    state.history = state.history.slice(0, 100);
+    fanfare(); confetti(w.color);
+
+    const band = $("#winBand");
+    band.style.background = w.color; band.style.color = textOn(w.color);
+    $("#winLabel").textContent = label;
+    $("#winName").textContent = w.name;
+    const removeBtn = $("#winRemove");
+    const live = state.items.find(i => i.id === w.id);
+    if(state.removeWinner && live){
+      removeOne(live.id);
+      note += " Removed from the wheel.";
+      removeBtn.hidden = true;
+    } else if(live){
+      removeBtn.hidden = false;
+      removeBtn.textContent = "Remove from wheel";
+    } else removeBtn.hidden = true;
+    $("#winNote").textContent = note;
+    save(); renderHistory();
+    openDialog();
+  }
+
+  function setBusy(b){
+    busy = b;
+    spinBtn.disabled = b;
+    spinBtn.textContent = b ? "…" : "Spin";
+    ["#layout", "#reshuffle", "#mode", "#bestOf", "#boMinus", "#boPlus"].forEach(q => $(q).disabled = b);
+  }
+
+  // ---------- dialog ----------
+  const dlg = $("#winDialog");
+  function openDialog(){ if(dlg.showModal){ try{ dlg.showModal(); }catch(e){ dlg.setAttribute("open",""); } } else dlg.setAttribute("open",""); $("#winAgain").focus(); }
+  function closeDialog(){ if(dlg.close) dlg.close(); else dlg.removeAttribute("open"); }
+  $("#winClose").onclick = closeDialog;
+  $("#winAgain").onclick = () => { closeDialog(); spin(); };
+  $("#winRemove").onclick = () => { if(lastWinnerId) removeOne(lastWinnerId); closeDialog(); };
+  dlg.addEventListener("click", e => { if(e.target === dlg) closeDialog(); });
+
+  // ---------- confetti ----------
+  const cc = $("#confetti"), cctx = cc.getContext("2d");
+  function confetti(main){
+    if(reduceMotion) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cc.width = innerWidth * dpr; cc.height = innerHeight * dpr;
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cols = [main, "#FFC43D", "#7B61FF", "#06D6A0", "#EF476F", "#118AB2"];
+    const parts = Array.from({length:160}, () => ({
+      x: innerWidth / 2 + (Math.random() - .5) * 120, y: innerHeight * 0.38,
+      vx: (Math.random() - .5) * 14, vy: -Math.random() * 13 - 4,
+      w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+      r: Math.random() * TAU, vr: (Math.random() - .5) * .35,
+      c: cols[Math.floor(Math.random() * cols.length)]
+    }));
+    const t0 = performance.now();
+    (function step(now){
+      const t = now - t0;
+      cctx.clearRect(0, 0, innerWidth, innerHeight);
+      for(const p of parts){
+        p.vy += 0.32; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        cctx.save(); cctx.translate(p.x, p.y); cctx.rotate(p.r);
+        cctx.globalAlpha = Math.max(0, 1 - t / 2600);
+        cctx.fillStyle = p.c; cctx.fillRect(-p.w/2, -p.h/2, p.w, p.h * Math.abs(Math.cos(p.r * 2)));
+        cctx.restore();
+      }
+      if(t < 2600) requestAnimationFrame(step); else cctx.clearRect(0, 0, innerWidth, innerHeight);
+    })(t0);
+  }
+
+  // ---------- item list ----------
+  const list = $("#list");
+  function pct(it){
+    const n = active().length;
+    if(!n || !it.name.trim()) return "0%";
+    const p = 100 / n;
+    return (p >= 10 || p === Math.round(p) ? Math.round(p) : p.toFixed(1)) + "%";
+  }
+
+  function renderList(){
+    if(!state.items.length){
+      list.innerHTML = `<li class="empty">The wheel is empty. Add an item above or paste a list.</li>`;
+    } else {
+      list.innerHTML = state.items.map(it => `
+        <li class="item" data-id="${it.id}">
+          <label class="swatch" style="background:${esc(it.color)}" title="Change color">
+            <input type="color" value="${esc(it.color)}" aria-label="Color for ${esc(it.name)}">
+          </label>
+          <input class="name" value="${esc(it.name)}" maxlength="80" aria-label="Item name">
+          <span class="prob">${pct(it)}</span>
+          <button class="del" aria-label="Delete ${esc(it.name)}">×</button>
+        </li>`).join("");
+    }
+    updateMeta();
+  }
+
+  function updateMeta(){
+    list.querySelectorAll(".item").forEach(row => {
+      const it = state.items.find(i => i.id === row.dataset.id);
+      if(!it) return;
+      row.querySelector(".prob").textContent = pct(it);
+      row.classList.toggle("off", !it.name.trim());
+    });
+    const act = active();
+    $("#nItems").textContent = state.items.length;
+    $("#sumLeft").textContent = `${act.length} on the wheel, ${act.length * per()} slices`;
+    $("#sumRight").textContent = "Chance";
+    $("#layout").value = state.layout;
+    $("#reshuffle").hidden = state.layout !== "scramble";
+    $("#slicesPer").value = per();
+    $("#modeNote").textContent = {
+      alternate: "Slices take turns around the wheel.",
+      scramble: "Slices are mixed in a random order.",
+      grouped: "Each item sits in one wedge."
+    }[state.layout];
+    spinBtn.setAttribute("aria-label", act.length ? "Spin the wheel" : "Add items to spin");
+  }
+
+  function changed(structural){
+    slices = buildSlices();
+    save(); draw();
+    if(structural) renderList(); else updateMeta();
+  }
+
+  function addItem(name){
+    name = String(name).trim();
+    if(!name) return false;
+    state.items.push({id:uid(), name:name.slice(0, 80), color:nextColor()});
+    return true;
+  }
+  function removeOne(id){
+    state.items = state.items.filter(i => i.id !== id);
+    changed(true);
+  }
+
+  list.addEventListener("input", e => {
+    const row = e.target.closest("[data-id]"); if(!row) return;
+    const it = state.items.find(i => i.id === row.dataset.id); if(!it) return;
+    if(e.target.classList.contains("name")){ it.name = e.target.value; changed(false); }
+    else if(e.target.type === "color"){ it.color = e.target.value; e.target.parentElement.style.background = it.color; changed(false); }
+  });
+  list.addEventListener("click", e => {
+    const btn = e.target.closest(".del"); if(!btn) return;
+    const row = btn.closest("[data-id]");
+    state.items = state.items.filter(i => i.id !== row.dataset.id);
+    changed(true);
+  });
+
+  // slices per item (global)
+  const setPer = v => { state.slicesPer = Math.max(1, Math.min(20, parseInt(v, 10) || 1)); changed(false); };
+  $("#spMinus").onclick = () => setPer(per() - 1);
+  $("#spPlus").onclick = () => setPer(per() + 1);
+  $("#slicesPer").addEventListener("change", e => setPer(e.target.value));
+
+  // add row
+  const newName = $("#newName");
+  function addFromInputs(){
+    if(addItem(newName.value)){
+      newName.value = ""; changed(true);
+      list.scrollTop = list.scrollHeight;
+    }
+    newName.focus();
+  }
+  $("#addBtn").onclick = addFromInputs;
+  newName.addEventListener("keydown", e => { if(e.key === "Enter") addFromInputs(); });
+
+  // bulk
+  const bulk = $("#bulk"), bulkText = $("#bulkText");
+  $("#bulkToggle").onclick = () => { bulk.hidden = !bulk.hidden; if(!bulk.hidden) bulkText.focus(); };
+  $("#bulkCancel").onclick = () => { bulk.hidden = true; bulkText.value = ""; };
+  $("#bulkAdd").onclick = () => {
+    let n = 0;
+    bulkText.value.split(/\r?\n/).forEach(line => { if(addItem(line)) n++; });
+    if(n){ bulkText.value = ""; bulk.hidden = true; changed(true); }
+  };
+
+  // toolbar
+  $("#shuffleList").onclick = () => {
+    shuffle(state.items);
+    if(state.layout === "scramble") state.order = scrambleUnits(active());
+    changed(true);
+  };
+  $("#sortList").onclick = () => { state.items.sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:"base"})); changed(true); };
+
+  // clear all: tap twice (browser confirm popups are blocked in some views)
+  const clearBtn = $("#clearAll");
+  let clearTimer = null;
+  const disarm = () => { clearTimeout(clearTimer); clearBtn.classList.remove("armed"); clearBtn.textContent = "Clear all"; };
+  clearBtn.onclick = () => {
+    if(!state.items.length || busy) return;
+    if(clearBtn.classList.contains("armed")){
+      disarm();
+      state.items = []; state.order = []; changed(true);
+      newName.focus();
+      return;
+    }
+    clearBtn.classList.add("armed");
+    clearBtn.textContent = "Tap again to clear";
+    clearTimer = setTimeout(disarm, 3000);
+  };
+
+  // layout
+  $("#layout").onchange = e => {
+    state.layout = e.target.value;
+    if(state.layout === "scramble") state.order = scrambleUnits(active());
+    changed(false);
+  };
+  $("#reshuffle").onclick = () => {
+    if(busy) return;
+    state.order = scrambleUnits(active());
+    changed(false);
+  };
+
+  // options
+  const durSel = $("#duration");
+  durSel.value = String(state.duration);
+  if(!durSel.value){ durSel.value = "5"; state.duration = 5; }
+  durSel.onchange = () => { state.duration = Number(durSel.value); save(); };
+  const rw = $("#removeWinner");
+  rw.checked = !!state.removeWinner;
+  rw.onchange = () => { state.removeWinner = rw.checked; save(); };
+
+  const soundBtn = $("#soundBtn");
+  const paintSound = () => { soundBtn.textContent = state.sound ? "🔊" : "🔇"; soundBtn.title = state.sound ? "Sound on" : "Sound off"; };
+  soundBtn.onclick = () => { state.sound = !state.sound; paintSound(); save(); if(state.sound) ensureAudio(); };
+  paintSound();
+
+  const applyTheme = () => {
+    if(state.theme) document.documentElement.setAttribute("data-theme", state.theme);
+    else document.documentElement.removeAttribute("data-theme");
+    readColors(); draw();
+  };
+  $("#themeBtn").onclick = () => {
+    const dark = state.theme ? state.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    state.theme = dark ? "light" : "dark"; save(); applyTheme();
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { readColors(); draw(); });
+
+  // mode
+  const modeSel = $("#mode"), boInput = $("#bestOf");
+  const clampBo = v => { v = parseInt(v, 10); if(isNaN(v)) v = 3; return Math.max(2, Math.min(25, v)); };
+  if(state.mode !== "bestof") state.mode = "single";
+  state.bestOf = clampBo(state.bestOf);
+  function paintMode(){
+    modeSel.value = state.mode;
+    $("#bestOfField").hidden = state.mode !== "bestof";
+    boInput.value = state.bestOf;
+  }
+  modeSel.onchange = () => { state.mode = modeSel.value; if(state.mode === "single") $("#series").hidden = true; paintMode(); save(); };
+  boInput.addEventListener("input", () => { if(boInput.value !== ""){ state.bestOf = clampBo(boInput.value); save(); } });
+  boInput.addEventListener("change", () => { state.bestOf = clampBo(boInput.value); boInput.value = state.bestOf; save(); });
+  $("#boMinus").onclick = () => { state.bestOf = clampBo(state.bestOf - 1); paintMode(); save(); };
+  $("#boPlus").onclick = () => { state.bestOf = clampBo(state.bestOf + 1); paintMode(); save(); };
+  paintMode();
+
+  // title
+  const title = $("#title");
+  title.value = state.title;
+  document.title = state.title || "Picker Wheel";
+  title.addEventListener("input", () => { state.title = title.value; document.title = title.value || "Picker Wheel"; save(); });
+  title.addEventListener("keydown", e => { if(e.key === "Enter") title.blur(); });
+
+  // tabs
+  function showTab(which){
+    const items = which === "items";
+    $("#tabItems").setAttribute("aria-selected", items); $("#tabHistory").setAttribute("aria-selected", !items);
+    $("#paneItems").hidden = !items; $("#paneHistory").hidden = items;
+  }
+  $("#tabItems").onclick = () => showTab("items");
+  $("#tabHistory").onclick = () => showTab("history");
+
+  // history
+  function renderHistory(){
+    $("#nHistory").textContent = state.history.length;
+    const h = $("#history"), tally = $("#tally");
+    if(!state.history.length){
+      h.innerHTML = `<li class="empty" style="display:block">No spins yet. Results show up here.</li>`;
+      tally.innerHTML = ""; return;
+    }
+    h.innerHTML = state.history.map(r => {
+      const d = new Date(r.at);
+      const t = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      return `<li><span class="dot" style="background:${esc(r.color)}"></span><span>${esc(r.name)}${r.detail ? `<small>${esc(r.detail)}</small>` : ""}</span><span class="t">${t}</span></li>`;
+    }).join("");
+    const counts = {};
+    state.history.forEach(r => counts[r.name] = (counts[r.name] || 0) + 1);
+    tally.innerHTML = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 12)
+      .map(([n, c]) => `<span>${esc(n)}: ${c}</span>`).join("");
+  }
+  $("#clearHistory").onclick = () => { state.history = []; save(); renderHistory(); };
+
+  // spin triggers
+  spinBtn.onclick = spin;
+  wheel.addEventListener("click", spin);
+  document.addEventListener("keydown", e => {
+    if(e.code !== "Space" || e.repeat) return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if(["input","textarea","select","button"].includes(tag) || dlg.open) return;
+    e.preventDefault(); spin();
+  });
+
+  // init
+  readColors();
+  if(state.theme) document.documentElement.setAttribute("data-theme", state.theme);
+  readColors();
+  slices = buildSlices();
+  renderList();
+  renderHistory();
+  if(window.ResizeObserver) new ResizeObserver(sizeCanvas).observe(wheel);
+  else window.addEventListener("resize", sizeCanvas);
+  sizeCanvas();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>
