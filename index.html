@@ -28,40 +28,59 @@
   --line:#3A3068; --rim:#0E0920; --focus:#B7A6FF; color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;min-height:100vh}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100vh;height:100dvh;overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;height:100%;overflow:hidden;display:flex;flex-direction:column}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 
-.top{max-width:1180px;margin:0 auto;padding:20px 20px 0;display:flex;align-items:center;gap:12px}
+.top{width:100%;max-width:1400px;margin:0 auto;flex:none;padding:10px 20px 0;display:flex;align-items:center;gap:12px}
 #title{flex:1;min-width:0;background:transparent;border:0;border-bottom:2px dashed transparent;
-  font-size:clamp(1.8rem,4.5vw,3rem);font-weight:800;letter-spacing:-0.02em;line-height:1.1;padding:4px 0}
+  font-size:clamp(1.4rem,min(4vw,5vh),2.6rem);font-weight:800;letter-spacing:-0.02em;line-height:1.1;padding:4px 0}
 #title:hover{border-bottom-color:var(--line)}
 #title:focus{outline:none;border-bottom-color:var(--focus)}
 .icon-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--surface);
   display:grid;place-items:center;font-size:1.1rem;flex:none}
 .icon-btn:hover{border-color:var(--ink)}
 
-.layout{max-width:1180px;margin:0 auto;padding:16px 20px 40px;display:grid;
-  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px;align-items:start}
-@media (max-width:860px){.layout{grid-template-columns:1fr;gap:24px}}
+.layout{flex:1;min-height:0;width:100%;max-width:1400px;margin:0 auto;padding:10px 20px 14px;display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:24px}
+.stage{min-width:0;min-height:0;container-type:size;display:grid;place-items:center}
+.side{min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+.side>.settings,.side>.series{flex:none}
+.panel{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel .tabs{flex:none}
+.pane{flex:1;min-height:0;display:flex;flex-direction:column}
+.pane>*{flex:none}
+.pane>.list,.pane>.history{flex:1 1 auto;min-height:0;max-height:none !important;overflow-y:auto}
+.settings .controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 12px;align-items:end}
+.settings .field{flex-direction:column;align-items:stretch;gap:3px;font-size:.85rem;min-height:0}
+.settings .field select{width:100%;padding:6px 2px 6px 4px;font-size:.95rem}
+.settings .field .stepper{justify-content:space-between;background:var(--surface)}
+.settings .field .stepper input{flex:1;min-width:0}
+.settings .row2{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.settings .check{min-height:34px}
+@media (max-width:520px){.settings .controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.settings .pill{min-height:36px;padding:4px 12px}
+.settings{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:10px 16px 12px}
+@media (max-width:700px){
+  .layout{display:flex;flex-direction:column;gap:10px;padding:6px 12px 10px}
+}
 
 /* Stage */
-.stage{display:flex;flex-direction:column;align-items:center;gap:18px}
-.wheel-wrap{position:relative;width:min(100%,560px);aspect-ratio:1}
+.wheel-wrap{position:relative;width:min(100cqw,100cqh - 12px);aspect-ratio:1;margin-top:12px}
 #wheel{width:100%;height:100%;display:block;cursor:pointer;touch-action:manipulation}
 .pointer{position:absolute;top:-10px;left:50%;width:44px;height:56px;margin-left:-22px;
   transform-origin:50% 22%;pointer-events:none;filter:drop-shadow(0 3px 0 rgba(0,0,0,.25))}
 .hub{position:absolute;top:50%;left:50%;width:23%;aspect-ratio:1;transform:translate(-50%,-50%);
   border-radius:50%;border:6px solid var(--rim);background:var(--sun);color:var(--sun-ink);
-  font-weight:800;font-size:clamp(1rem,3.4vw,1.6rem);letter-spacing:-0.01em;
+  font-weight:800;font-size:clamp(.8rem,5cqmin,1.6rem);letter-spacing:-0.01em;
   box-shadow:inset 0 -6px 0 rgba(0,0,0,.14);transition:transform .15s}
 .hub:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.05)}
 .hub:active:not(:disabled){transform:translate(-50%,-50%) scale(.97)}
 .hub:disabled{cursor:default}
 
-.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;align-items:center}
+.controls{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
 .pill{border:2px solid var(--ink);background:transparent;border-radius:999px;padding:8px 16px;font-weight:600;min-height:44px}
 .pill:hover{background:var(--surface-2)}
 .pill.solid{background:var(--ink);color:var(--bg)}
@@ -71,15 +90,15 @@ button{cursor:pointer}
 .field select{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 8px;color:var(--ink)}
 .check{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--muted);min-height:44px;cursor:pointer}
 .check input{width:20px;height:20px;accent-color:var(--ink)}
-.mode-note{color:var(--muted);font-size:.9rem;text-align:center;margin:-6px 0 0;min-height:1.3em}
+.mode-note{color:var(--muted);font-size:.9rem;margin:2px 0 0;min-height:1.3em}
 
 /* Panel */
 .panel{background:var(--surface);border:2px solid var(--line);border-radius:22px;overflow:hidden}
 .tabs{display:flex;border-bottom:2px solid var(--line)}
-.tab{flex:1;background:transparent;border:0;padding:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab{flex:1;background:transparent;border:0;padding:11px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
 .tab .n{display:inline-block;min-width:1.6em;padding:0 6px;border-radius:999px;background:var(--surface-2);font-size:.85rem;margin-left:4px}
-.pane{padding:18px}
+.pane{padding:14px 18px}
 .pane[hidden]{display:none}
 
 .add-row{display:grid;grid-template-columns:1fr auto;gap:8px}
@@ -93,7 +112,9 @@ button{cursor:pointer}
 .chip:hover{background:var(--line)}
 .chip.danger{color:var(--danger)}
 .chip.armed{background:var(--danger);color:#fff}
-.global-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-weight:600}
+.global-row{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink);flex:none}
+.global-row .stepper button{width:28px;height:28px}
+.global-row .stepper input{width:30px}
 
 .bulk{margin-top:10px}
 .bulk[hidden]{display:none}
@@ -102,7 +123,8 @@ button{cursor:pointer}
 .bulk .row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 
 .summary{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;margin:12px 2px 4px}
-.list{list-style:none;margin:0;padding:0;max-height:min(52vh,520px);overflow-y:auto}
+.list{list-style:none;margin:0;padding:0;max-height:min(32vh,360px);overflow-y:auto}
+
 .item{display:grid;grid-template-columns:30px minmax(0,1fr) 52px 34px;gap:8px;align-items:center;
   padding:8px 2px;border-bottom:1px solid var(--line)}
 .item:last-child{border-bottom:0}
@@ -141,12 +163,15 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
 .win-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 
 [hidden]{display:none !important}
-.series{width:min(100%,560px);background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:14px 16px 16px}
-.series-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.series{width:100%;background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:14px 16px 16px}
+.series-head{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
+.series-head .prog{white-space:nowrap}
 .series-head strong{font-size:1.15rem;font-weight:800}
 .series-head .prog{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .series-head .chip{margin-left:auto}
-.dots{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;padding:0}
+.series-head .dots{margin:0}
+.dots{list-style:none;display:flex;flex-wrap:wrap;gap:5px;padding:0}
+.board{margin-top:10px}
 .dots li{width:18px;height:18px;border-radius:50%;border:2px solid var(--ink)}
 .dots li.todo{border-style:dashed;border-color:var(--line)}
 .dots li.tb{border-radius:4px}
@@ -162,6 +187,74 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (prefers-reduced-motion: reduce){ .hub{transition:none} }
+@media all{
+  .list .item{padding:2px 2px}
+  .list .item .name{padding:3px 8px}
+  .list .swatch{width:22px;height:22px}
+  .list .del{width:30px;height:30px}
+  .top #title{font-size:2.4rem}
+  .summary{margin:8px 2px 2px}
+  .toolbar{margin:10px 0 4px}
+  .series{padding:10px 14px 12px}
+  .series-msg{margin-top:6px}
+}
+
+/* compact everywhere */
+.summary{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 2px 4px}
+.chip{padding:5px 11px;min-height:32px;font-size:.88rem}
+.toolbar{margin:8px 0 2px}
+.add-row input{min-height:40px;padding:7px 12px}
+.add-row .pill{min-height:40px;padding:4px 16px}
+.tab{padding:9px}
+.pane{padding:10px 14px}
+.settings{padding:8px 14px 8px}
+.settings .check{min-height:30px}
+.series{padding:8px 14px 10px}
+.board{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;padding:3px 10px 3px 6px;font-weight:600;font-size:.9rem;max-width:100%}
+.bchip i{width:12px;height:12px;border-radius:50%;flex:none}
+.bchip b{font-variant-numeric:tabular-nums}
+.bchip.win{outline:2px solid var(--ink)}
+.bchip.win::after{content:"🏆"}
+.series-msg:empty{display:none}
+.series-msg{margin:6px 0 0}
+.board:empty{display:none}
+.side{overflow-y:auto;overflow-x:hidden}
+.panel{min-height:170px}
+@media (max-height:700px){
+  .top{padding-top:6px}
+  .icon-btn{width:36px;height:36px}
+  .layout{padding-top:6px;padding-bottom:8px;gap:16px}
+  .side{gap:8px}
+  .settings .field select,.settings .field .stepper{font-size:.9rem}
+  .settings .field select{padding:3px 2px 3px 4px}
+  .settings .field .stepper button{height:28px}
+}
+@media (max-width:700px){
+  .layout{padding:4px 12px 8px}
+  .stage{flex:0 1 auto;height:clamp(140px,36dvh,calc(100vw - 24px))}
+  .side{flex:1 1 0}
+  .panel{min-height:170px}
+  .top #title{font-size:1.6rem}
+  .chip{padding:4px 9px;font-size:.84rem;min-height:30px}
+  .icon-btn{width:38px;height:38px}
+}
+
+#tabSettings{display:none}
+@media (max-width:700px), (max-height:520px){
+  #tabSettings{display:block}
+  .side>.series{order:0}
+  .side>.panel{order:1}
+  .side>.settings{order:2;display:none}
+  body[data-tab="settings"] .side>.settings{display:block;margin-top:-12px;border-top:0;border-radius:0 0 22px 22px;padding-top:14px}
+  body[data-tab="settings"] .side>.panel{flex:none;min-height:0;border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom:0}
+  .side{gap:10px}
+}
+@media (max-height:520px) and (min-width:701px){
+  .top #title{font-size:1.4rem}
+  .panel{min-height:0}
+}
+@media (max-width:1150px) and (min-width:701px){.settings .field select{font-size:.84rem;padding-left:2px}}
 </style>
 </head>
 <body>
@@ -184,6 +277,10 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
       <button class="hub" id="spinBtn">Spin</button>
     </div>
 
+  </section>
+
+  <div class="side">
+  <section class="settings" aria-label="Spin settings">
     <div class="controls">
       <label class="field">Layout
         <select id="layout">
@@ -192,7 +289,6 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
           <option value="grouped">Grouped</option>
         </select>
       </label>
-      <button class="pill solid" id="reshuffle">Scramble again</button>
       <label class="field">Spin time
         <select id="duration">
           <option value="3">Quick</option>
@@ -207,32 +303,34 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
         </select>
       </label>
       <div class="field" id="bestOfField">
+        <span>Spins</span>
         <div class="stepper">
           <button id="boMinus" aria-label="Fewer spins">−</button>
           <input id="bestOf" type="number" min="2" max="25" aria-label="Number of spins">
           <button id="boPlus" aria-label="More spins">+</button>
         </div>
-        spins
       </div>
-      <label class="check"><input type="checkbox" id="removeWinner"> Remove winner after spin</label>
+      <div class="row2">
+        <label class="check"><input type="checkbox" id="removeWinner"> Remove winner after spin</label>
+        <button class="chip" id="reshuffle">Scramble again</button>
+      </div>
     </div>
-    <p class="mode-note" id="modeNote"></p>
 
+  </section>
     <div class="series" id="series" hidden aria-live="polite">
       <div class="series-head">
         <strong id="seriesTitle">Best of 3</strong>
         <span class="prog" id="seriesProgress"></span>
-        <button class="chip" id="seriesStop">Stop after this spin</button>
+        <ol class="dots" id="seriesDots"></ol>
+        <button class="chip" id="seriesStop" title="Stop after this spin">Stop</button>
       </div>
-      <ol class="dots" id="seriesDots"></ol>
       <div class="board" id="seriesBoard"></div>
       <p class="series-msg" id="seriesMsg"></p>
     </div>
-  </section>
-
   <aside class="panel">
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabItems" aria-selected="true" aria-controls="paneItems">Items <span class="n" id="nItems">0</span></button>
+      <button class="tab" role="tab" id="tabSettings" aria-selected="false">Settings</button>
       <button class="tab" role="tab" id="tabHistory" aria-selected="false" aria-controls="paneHistory">History <span class="n" id="nHistory">0</span></button>
     </div>
 
@@ -242,20 +340,10 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
         <input id="newName" placeholder="Add an item" maxlength="80" autocomplete="off">
         <button class="pill solid" id="addBtn">Add</button>
       </div>
-      <div class="global-row">
-        <span>Slices per item</span>
-        <div class="stepper">
-          <button id="spMinus" aria-label="Fewer slices per item">−</button>
-          <input id="slicesPer" type="number" min="1" max="20" aria-label="Slices per item">
-          <button id="spPlus" aria-label="More slices per item">+</button>
-        </div>
-      </div>
-      <p class="hint">Every item gets the same number of slices, so the odds stay equal.</p>
-
       <div class="toolbar">
-        <button class="chip" id="bulkToggle">Paste a list</button>
-        <button class="chip" id="shuffleList">Shuffle list</button>
-        <button class="chip" id="sortList">Sort A to Z</button>
+        <button class="chip" id="bulkToggle">Paste list</button>
+        <button class="chip" id="shuffleList">Shuffle</button>
+        <button class="chip" id="sortList">Sort A–Z</button>
         <button class="chip danger" id="clearAll">Clear all</button>
       </div>
 
@@ -268,7 +356,14 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
         </div>
       </div>
 
-      <div class="summary"><span id="sumLeft"></span><span id="sumRight"></span></div>
+      <div class="summary"><span id="sumLeft"></span><div class="global-row">
+        <span title="Every item gets the same number of slices, so the odds stay equal">Slices each</span>
+        <div class="stepper">
+          <button id="spMinus" aria-label="Fewer slices per item">−</button>
+          <input id="slicesPer" type="number" min="1" max="20" aria-label="Slices per item">
+          <button id="spPlus" aria-label="More slices per item">+</button>
+        </div>
+      </div></div>
       <ul class="list" id="list"></ul>
     </div>
 
@@ -278,6 +373,7 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
       <div class="toolbar"><button class="chip danger" id="clearHistory">Clear history</button></div>
     </div>
   </aside>
+  </div>
 </main>
 
 <dialog id="winDialog" aria-labelledby="winName">
@@ -577,7 +673,7 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
     series = {n, results:[], stop:false, leaders:null, running:true, msg:"", winner:null};
     setBusy(true);
     $("#series").hidden = false;
-    $("#seriesStop").textContent = "Stop after this spin";
+    $("#seriesStop").textContent = "Stop";
     renderSeries();
 
     for(let i = 0; i < n && !series.stop; i++){
@@ -647,11 +743,7 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
     const c = {};
     main.forEach(r => { c[r.id] = c[r.id] || {name:r.name, color:r.color, n:0}; c[r.id].n++; });
     $("#seriesBoard").innerHTML = Object.entries(c).sort((a, b) => b[1].n - a[1].n).map(([id, v]) => `
-      <div class="brow${s.winner === id ? " win" : ""}">
-        <span class="bn">${esc(v.name)}</span>
-        <span class="bar"><i style="width:${v.n / s.n * 100}%;background:${esc(v.color)}"></i></span>
-        <span class="bc">${v.n}</span>
-      </div>`).join("");
+      <span class="bchip${s.winner === id ? " win" : ""}"><i style="background:${esc(v.color)}"></i>${esc(v.name)} <b>${v.n}</b></span>`).join("");
     $("#seriesMsg").textContent = s.msg;
   }
   $("#seriesStop").onclick = () => { if(series && series.running){ series.stop = true; $("#seriesStop").textContent = "Stopping…"; } };
@@ -762,16 +854,10 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
     });
     const act = active();
     $("#nItems").textContent = state.items.length;
-    $("#sumLeft").textContent = `${act.length} on the wheel, ${act.length * per()} slices`;
-    $("#sumRight").textContent = "Chance";
+    $("#sumLeft").textContent = `${act.length} items, ${act.length * per()} slices`;
     $("#layout").value = state.layout;
     $("#reshuffle").hidden = state.layout !== "scramble";
     $("#slicesPer").value = per();
-    $("#modeNote").textContent = {
-      alternate: "Slices take turns around the wheel.",
-      scramble: "Slices are mixed in a random order.",
-      grouped: "Each item sits in one wedge."
-    }[state.layout];
     spinBtn.setAttribute("aria-label", act.length ? "Spin the wheel" : "Add items to spin");
   }
 
@@ -920,11 +1006,20 @@ dialog::backdrop{background:rgba(23,17,46,.55)}
   title.addEventListener("keydown", e => { if(e.key === "Enter") title.blur(); });
 
   // tabs
+  const compactMQ = matchMedia("(max-width:700px), (max-height:520px)");
   function showTab(which){
-    const items = which === "items";
-    $("#tabItems").setAttribute("aria-selected", items); $("#tabHistory").setAttribute("aria-selected", !items);
-    $("#paneItems").hidden = !items; $("#paneHistory").hidden = items;
+    if(which === "settings" && !compactMQ.matches) which = "items";
+    ["items", "settings", "history"].forEach(t => {
+      const id = "#tab" + t[0].toUpperCase() + t.slice(1);
+      $(id).setAttribute("aria-selected", t === which);
+    });
+    $("#paneItems").hidden = which !== "items";
+    $("#paneHistory").hidden = which !== "history";
+    document.body.dataset.tab = which;
   }
+  compactMQ.addEventListener?.("change", () => { if(document.body.dataset.tab === "settings") showTab("items"); });
+  $("#tabSettings").onclick = () => showTab("settings");
+  showTab("items");
   $("#tabItems").onclick = () => showTab("items");
   $("#tabHistory").onclick = () => showTab("history");
 
